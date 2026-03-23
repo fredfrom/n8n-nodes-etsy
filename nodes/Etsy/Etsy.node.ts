@@ -42,9 +42,13 @@ export class Etsy implements INodeType {
 				noDataExpression: true,
 				options: [
 					{ name: 'Listing', value: 'listing' },
+					{ name: 'Listing Image', value: 'listingImage' },
 					{ name: 'Receipt', value: 'receipt' },
 					{ name: 'Review', value: 'review' },
+					{ name: 'Shipping Profile', value: 'shippingProfile' },
 					{ name: 'Shop', value: 'shop' },
+					{ name: 'Shop Section', value: 'shopSection' },
+					{ name: 'Taxonomy', value: 'taxonomy' },
 				],
 				default: 'shop',
 			},
@@ -466,6 +470,148 @@ export class Etsy implements INodeType {
 				displayOptions: { show: { resource: ['review'], operation: ['getAll'] } },
 				description: 'Number of results to skip',
 			},
+
+			// ── Listing Image Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['listingImage'] } },
+				options: [
+					{
+						name: 'Delete',
+						value: 'delete',
+						description: 'Delete a listing image',
+						action: 'Delete a listing image',
+					},
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						description: 'Get many images for a listing',
+						action: 'Get many listing images',
+					},
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Shop ID',
+				name: 'shopId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['listingImage'] } },
+				description: 'The numeric ID of the Etsy shop',
+			},
+			{
+				displayName: 'Listing ID',
+				name: 'listingId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['listingImage'] } },
+				description: 'The numeric ID of the listing',
+			},
+			{
+				displayName: 'Image ID',
+				name: 'imageId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: {
+					show: { resource: ['listingImage'], operation: ['delete'] },
+				},
+				description: 'The numeric ID of the listing image',
+			},
+
+			// ── Shipping Profile Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['shippingProfile'] } },
+				options: [
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						description: 'Get many shipping profiles for a shop',
+						action: 'Get many shipping profiles',
+					},
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Shop ID',
+				name: 'shopId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['shippingProfile'] } },
+				description: 'The numeric ID of the Etsy shop',
+			},
+
+			// ── Shop Section Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['shopSection'] } },
+				options: [
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						description: 'Get many sections for a shop',
+						action: 'Get many shop sections',
+					},
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Shop ID',
+				name: 'shopId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['shopSection'] } },
+				description: 'The numeric ID of the Etsy shop',
+			},
+
+			// ── Taxonomy Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['taxonomy'] } },
+				options: [
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						description: 'Get many seller taxonomy nodes',
+						action: 'Get many taxonomy nodes',
+					},
+					{
+						name: 'Get Properties',
+						value: 'getProperties',
+						description: 'Get the properties of a taxonomy node',
+						action: 'Get taxonomy node properties',
+					},
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Taxonomy ID',
+				name: 'taxonomyId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: {
+					show: { resource: ['taxonomy'], operation: ['getProperties'] },
+				},
+				description: 'The numeric ID of the taxonomy node',
+			},
 		],
 		usableAsTool: true,
 	};
@@ -663,7 +809,7 @@ export class Etsy implements INodeType {
 				}
 
 				// ── Review ──
-				else {
+				else if (resource === 'review') {
 					const shopId = this.getNodeParameter('shopId', i) as number;
 					const limit = this.getNodeParameter('limit', i) as number;
 					const offset = this.getNodeParameter('offset', i) as number;
@@ -673,6 +819,61 @@ export class Etsy implements INodeType {
 						undefined,
 						{ limit, offset },
 					);
+				}
+
+				// ── Listing Image ──
+				else if (resource === 'listingImage') {
+					const shopId = this.getNodeParameter('shopId', i) as number;
+					const listingId = this.getNodeParameter('listingId', i) as number;
+
+					if (operation === 'getAll') {
+						responseData = await makeRequestWithRetry(
+							'GET',
+							`/application/shops/${shopId}/listings/${listingId}/images`,
+						);
+					} else {
+						// delete
+						const imageId = this.getNodeParameter('imageId', i) as number;
+						responseData = await makeRequestWithRetry(
+							'DELETE',
+							`/application/shops/${shopId}/listings/${listingId}/images/${imageId}`,
+						);
+					}
+				}
+
+				// ── Shipping Profile ──
+				else if (resource === 'shippingProfile') {
+					const shopId = this.getNodeParameter('shopId', i) as number;
+					responseData = await makeRequestWithRetry(
+						'GET',
+						`/application/shops/${shopId}/shipping-profiles`,
+					);
+				}
+
+				// ── Shop Section ──
+				else if (resource === 'shopSection') {
+					const shopId = this.getNodeParameter('shopId', i) as number;
+					responseData = await makeRequestWithRetry(
+						'GET',
+						`/application/shops/${shopId}/sections`,
+					);
+				}
+
+				// ── Taxonomy ──
+				else {
+					if (operation === 'getAll') {
+						responseData = await makeRequestWithRetry(
+							'GET',
+							'/application/seller-taxonomy/nodes',
+						);
+					} else {
+						// getProperties
+						const taxonomyId = this.getNodeParameter('taxonomyId', i) as number;
+						responseData = await makeRequestWithRetry(
+							'GET',
+							`/application/seller-taxonomy/nodes/${taxonomyId}/properties`,
+						);
+					}
 				}
 
 				const executionData = this.helpers.constructExecutionMetaData(
