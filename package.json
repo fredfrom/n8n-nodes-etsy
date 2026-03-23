@@ -51,6 +51,9 @@
 		"ts-jest": "^29.4.6",
 		"typescript": "5.9.3"
 	},
+	"engines": {
+		"node": ">=20.15"
+	},
 	"peerDependencies": {
 		"n8n-workflow": "*"
 	}
