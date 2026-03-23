@@ -1,0 +1,22 @@
+{
+	"node": "n8n-nodes-base.etsy",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Sales"],
+	"resources": {
+		"primaryDocumentation": [
+			{
+				"url": "https://developers.etsy.com/documentation/"
+			}
+		],
+		"credentialDocumentation": [
+			{
+				"url": "https://developers.etsy.com/documentation/essentials/authentication"
+			}
+		]
+	},
+	"alias": ["etsy", "shop", "ecommerce", "marketplace", "listing", "order"],
+	"subcategories": {
+		"Sales": ["eCommerce"]
+	}
+}
