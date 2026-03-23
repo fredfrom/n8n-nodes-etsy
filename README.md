@@ -239,3 +239,4 @@ The term "Etsy" is a trademark of Etsy, Inc. This application uses the Etsy API 
 ## Support
 
 Found a bug or have a feature request? [Open an issue on GitHub](https://github.com/friedemannfrommelt/n8n-nodes-etsy/issues).
+
