@@ -325,6 +325,12 @@ export class Etsy implements INodeType {
 				displayOptions: { show: { resource: ['receipt'] } },
 				options: [
 					{
+						name: 'Create Shipment',
+						value: 'createShipment',
+						description: 'Mark an order as shipped with tracking info',
+						action: 'Create a shipment',
+					},
+					{
 						name: 'Get',
 						value: 'get',
 						description: 'Get a receipt by ID',
@@ -360,7 +366,9 @@ export class Etsy implements INodeType {
 				type: 'number',
 				default: 0,
 				required: true,
-				displayOptions: { show: { resource: ['receipt'], operation: ['get', 'update'] } },
+				displayOptions: {
+					show: { resource: ['receipt'], operation: ['get', 'update', 'createShipment'] },
+				},
 				description: 'The numeric ID of the receipt (order)',
 			},
 			// Receipt: Get All params
@@ -430,6 +438,49 @@ export class Etsy implements INodeType {
 					},
 				],
 			},
+			// Receipt: Create Shipment fields
+			{
+				displayName: 'Tracking Code',
+				name: 'trackingCode',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: { resource: ['receipt'], operation: ['createShipment'] },
+				},
+				description: 'The tracking number from the shipping carrier',
+			},
+			{
+				displayName: 'Carrier Name',
+				name: 'carrierName',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: { resource: ['receipt'], operation: ['createShipment'] },
+				},
+				description:
+					'The name of the shipping carrier (e.g. "dhl", "usps", "fedex", "ups", "deutsche-post", "royal-mail")',
+			},
+			{
+				displayName: 'Send BCC',
+				name: 'sendBcc',
+				type: 'boolean',
+				default: false,
+				displayOptions: {
+					show: { resource: ['receipt'], operation: ['createShipment'] },
+				},
+				description: 'Whether to send a BCC copy of the shipping notification to the seller',
+			},
+			{
+				displayName: 'Note to Buyer',
+				name: 'noteToBuyer',
+				type: 'string',
+				typeOptions: { rows: 3 },
+				default: '',
+				displayOptions: {
+					show: { resource: ['receipt'], operation: ['createShipment'] },
+				},
+				description: 'Optional message to the buyer included in the shipping notification email',
+			},
 
 			// ── Review Operations ──
 			{
@@ -497,6 +548,12 @@ export class Etsy implements INodeType {
 						description: 'Get many images for a listing',
 						action: 'Get many listing images',
 					},
+					{
+						name: 'Upload',
+						value: 'upload',
+						description: 'Upload an image to a listing',
+						action: 'Upload a listing image',
+					},
 				],
 				default: 'getAll',
 			},
@@ -528,6 +585,49 @@ export class Etsy implements INodeType {
 					show: { resource: ['listingImage'], operation: ['delete'] },
 				},
 				description: 'The numeric ID of the listing image',
+			},
+			{
+				displayName: 'Binary Property',
+				name: 'binaryPropertyName',
+				type: 'string',
+				default: 'data',
+				required: true,
+				displayOptions: {
+					show: { resource: ['listingImage'], operation: ['upload'] },
+				},
+				description:
+					'Name of the binary property containing the image file to upload. Use an HTTP Request or Read Binary File node to provide the image.',
+			},
+			{
+				displayName: 'Rank',
+				name: 'rank',
+				type: 'number',
+				default: 1,
+				displayOptions: {
+					show: { resource: ['listingImage'], operation: ['upload'] },
+				},
+				description:
+					'The position of the image in the listing (1 = primary image). Range: 1-10.',
+			},
+			{
+				displayName: 'Overwrite',
+				name: 'overwrite',
+				type: 'boolean',
+				default: false,
+				displayOptions: {
+					show: { resource: ['listingImage'], operation: ['upload'] },
+				},
+				description: 'Whether to replace an existing image at this rank',
+			},
+			{
+				displayName: 'Alt Text',
+				name: 'altText',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: { resource: ['listingImage'], operation: ['upload'] },
+				},
+				description: 'Alt text for the image (accessibility and SEO)',
 			},
 
 			// ── Shipping Profile Operations ──
@@ -1100,6 +1200,24 @@ export class Etsy implements INodeType {
 							'GET',
 							`/application/shops/${shopId}/receipts/${receiptId}`,
 						);
+					} else if (operation === 'createShipment') {
+						const receiptId = this.getNodeParameter('receiptId', i) as number;
+						const trackingCode = this.getNodeParameter('trackingCode', i) as string;
+						const carrierName = this.getNodeParameter('carrierName', i) as string;
+						const sendBcc = this.getNodeParameter('sendBcc', i) as boolean;
+						const noteToBuyer = this.getNodeParameter('noteToBuyer', i) as string;
+
+						const body: IDataObject = {};
+						if (trackingCode) body.tracking_code = trackingCode;
+						if (carrierName) body.carrier_name = carrierName;
+						if (sendBcc) body.send_bcc = sendBcc;
+						if (noteToBuyer) body.note_to_buyer = noteToBuyer;
+
+						responseData = await makeRequestWithRetry(
+							'POST',
+							`/application/shops/${shopId}/receipts/${receiptId}/tracking`,
+							body,
+						);
 					} else {
 						// update
 						const receiptId = this.getNodeParameter('receiptId', i) as number;
@@ -1135,6 +1253,59 @@ export class Etsy implements INodeType {
 							'GET',
 							`/application/shops/${shopId}/listings/${listingId}/images`,
 						);
+					} else if (operation === 'upload') {
+						const binaryPropertyName = this.getNodeParameter(
+							'binaryPropertyName',
+							i,
+						) as string;
+						const rank = this.getNodeParameter('rank', i) as number;
+						const overwrite = this.getNodeParameter('overwrite', i) as boolean;
+						const altText = this.getNodeParameter('altText', i) as string;
+
+						const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
+						const buffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+
+						const boundary = `----n8nBoundary${Date.now()}`;
+						const fileName = binaryData.fileName ?? 'image.jpg';
+						const mimeType = binaryData.mimeType ?? 'image/jpeg';
+
+						const parts: Buffer[] = [];
+						const addField = (name: string, value: string) => {
+							parts.push(
+								Buffer.from(
+									`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`,
+								),
+							);
+						};
+
+						addField('rank', rank.toString());
+						addField('overwrite', overwrite.toString());
+						if (altText) addField('alt_text', altText);
+
+						parts.push(
+							Buffer.from(
+								`--${boundary}\r\nContent-Disposition: form-data; name="image"; filename="${fileName}"\r\nContent-Type: ${mimeType}\r\n\r\n`,
+							),
+						);
+						parts.push(buffer);
+						parts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+
+						const body = Buffer.concat(parts);
+
+						const uploadOptions: IHttpRequestOptions = {
+							method: 'POST',
+							url: `${BASE_URL}/application/shops/${shopId}/listings/${listingId}/images`,
+							headers: {
+								'x-api-key': `${clientId}:${clientSecret}`,
+								Authorization: `Bearer ${accessToken}`,
+								'Content-Type': `multipart/form-data; boundary=${boundary}`,
+							},
+							body,
+							json: true,
+						};
+
+						// eslint-disable-next-line @n8n/community-nodes/no-http-request-with-manual-auth
+						responseData = (await this.helpers.httpRequest(uploadOptions)) as IDataObject;
 					} else {
 						// delete
 						const imageId = this.getNodeParameter('imageId', i) as number;

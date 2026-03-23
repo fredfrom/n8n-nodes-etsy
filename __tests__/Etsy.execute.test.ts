@@ -386,6 +386,58 @@ describe('Etsy Node Execute', () => {
 		});
 	});
 
+	describe('Receipt Create Shipment', () => {
+		it('should POST tracking info to create a shipment', async () => {
+			const mockResponse = { receipt_id: 555, was_shipped: true };
+			const context = createMockExecuteFunctions(
+				{
+					resource: 'receipt',
+					operation: 'createShipment',
+					shopId: 123,
+					receiptId: 555,
+					trackingCode: 'DHL123456',
+					carrierName: 'dhl',
+					sendBcc: true,
+					noteToBuyer: 'Your order is on the way!',
+				},
+				[mockResponse],
+			);
+
+			await node.execute.call(context);
+
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('POST');
+			expect(args.url).toContain('/application/shops/123/receipts/555/tracking');
+			expect(args.body).toEqual({
+				tracking_code: 'DHL123456',
+				carrier_name: 'dhl',
+				send_bcc: true,
+				note_to_buyer: 'Your order is on the way!',
+			});
+		});
+
+		it('should omit empty optional fields', async () => {
+			const context = createMockExecuteFunctions(
+				{
+					resource: 'receipt',
+					operation: 'createShipment',
+					shopId: 123,
+					receiptId: 555,
+					trackingCode: 'TRACK123',
+					carrierName: '',
+					sendBcc: false,
+					noteToBuyer: '',
+				},
+				[{ receipt_id: 555 }],
+			);
+
+			await node.execute.call(context);
+
+			const args = getHttpRequestArgs(context);
+			expect(args.body).toEqual({ tracking_code: 'TRACK123' });
+		});
+	});
+
 	describe('Listing Inventory resource', () => {
 		it('should GET inventory for a listing', async () => {
 			const context = createMockExecuteFunctions(
