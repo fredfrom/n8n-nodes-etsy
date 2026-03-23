@@ -30,12 +30,18 @@ describe('Etsy Node Description', () => {
 		expect(values).toContain('shop');
 		expect(values).toContain('listing');
 		expect(values).toContain('listingImage');
+		expect(values).toContain('listingInventory');
+		expect(values).toContain('listingProperty');
+		expect(values).toContain('payment');
 		expect(values).toContain('receipt');
+		expect(values).toContain('transaction');
+		expect(values).toContain('returnPolicy');
 		expect(values).toContain('review');
 		expect(values).toContain('shippingProfile');
 		expect(values).toContain('shopSection');
 		expect(values).toContain('taxonomy');
-		expect(values).toHaveLength(8);
+		expect(values).toContain('etsyAds');
+		expect(values).toHaveLength(14);
 	});
 
 	describe('Shop operations', () => {

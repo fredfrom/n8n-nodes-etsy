@@ -386,6 +386,136 @@ describe('Etsy Node Execute', () => {
 		});
 	});
 
+	describe('Listing Inventory resource', () => {
+		it('should GET inventory for a listing', async () => {
+			const context = createMockExecuteFunctions(
+				{ resource: 'listingInventory', operation: 'get', listingId: 456 },
+				[{ products: [] }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('GET');
+			expect(args.url).toContain('/application/listings/456/inventory');
+		});
+
+		it('should PUT to update listing inventory', async () => {
+			const context = createMockExecuteFunctions(
+				{
+					resource: 'listingInventory',
+					operation: 'update',
+					listingId: 456,
+					productsJson: '[{"offerings":[{"price":10,"quantity":5}]}]',
+				},
+				[{ products: [] }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('PUT');
+			expect(args.url).toContain('/application/listings/456/inventory');
+			expect(args.body).toEqual({
+				products: [{ offerings: [{ price: 10, quantity: 5 }] }],
+			});
+		});
+	});
+
+	describe('Listing Property resource', () => {
+		it('should GET properties for a listing', async () => {
+			const context = createMockExecuteFunctions(
+				{ resource: 'listingProperty', operation: 'getAll', shopId: 123, listingId: 456 },
+				[{ count: 3, results: [] }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('GET');
+			expect(args.url).toContain('/application/shops/123/listings/456/properties');
+		});
+	});
+
+	describe('Payment resource', () => {
+		it('should GET all payments for a shop', async () => {
+			const context = createMockExecuteFunctions(
+				{ resource: 'payment', operation: 'getAll', shopId: 123, limit: 50, offset: 0 },
+				[{ count: 1, results: [] }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('GET');
+			expect(args.url).toContain('/application/shops/123/payments');
+		});
+
+		it('should GET payments by receipt', async () => {
+			const context = createMockExecuteFunctions(
+				{ resource: 'payment', operation: 'getByReceipt', shopId: 123, receiptId: 555 },
+				[{ count: 1, results: [] }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('GET');
+			expect(args.url).toContain('/application/shops/123/receipts/555/payments');
+		});
+	});
+
+	describe('Receipt Transaction resource', () => {
+		it('should GET transactions for a receipt', async () => {
+			const context = createMockExecuteFunctions(
+				{ resource: 'transaction', operation: 'getAll', shopId: 123, receiptId: 555 },
+				[{ count: 2, results: [] }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('GET');
+			expect(args.url).toContain('/application/shops/123/receipts/555/transactions');
+		});
+
+		it('should GET transactions by shop', async () => {
+			const context = createMockExecuteFunctions(
+				{ resource: 'transaction', operation: 'getByShop', shopId: 123, limit: 50, offset: 0 },
+				[{ count: 10, results: [] }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('GET');
+			expect(args.url).toContain('/application/shops/123/transactions');
+		});
+	});
+
+	describe('Return Policy resource', () => {
+		it('should GET return policies for a shop', async () => {
+			const context = createMockExecuteFunctions(
+				{ resource: 'returnPolicy', operation: 'getAll', shopId: 123 },
+				[{ count: 1, results: [] }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('GET');
+			expect(args.url).toContain('/application/shops/123/policies/return');
+		});
+	});
+
+	describe('Etsy Ads resource', () => {
+		it('should GET all promoted listings', async () => {
+			const context = createMockExecuteFunctions(
+				{ resource: 'etsyAds', operation: 'getAll', shopId: 123, limit: 50, offset: 0 },
+				[{ count: 5, results: [] }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('GET');
+			expect(args.url).toContain('/application/shops/123/listings/active/promoted');
+		});
+
+		it('should GET a promoted listing ad', async () => {
+			const context = createMockExecuteFunctions(
+				{ resource: 'etsyAds', operation: 'get', shopId: 123, listingId: 456 },
+				[{ listing_id: 456, is_promoted: true }],
+			);
+			await node.execute.call(context);
+			const args = getHttpRequestArgs(context);
+			expect(args.method).toBe('GET');
+			expect(args.url).toContain('/application/shops/123/listings/456/promoted');
+		});
+	});
+
 	describe('Token refresh', () => {
 		it('should retry with new token on 401', async () => {
 			const error401 = Object.assign(new Error('Unauthorized'), { statusCode: 401 });

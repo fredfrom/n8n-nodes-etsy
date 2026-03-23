@@ -41,9 +41,15 @@ export class Etsy implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
+					{ name: 'Etsy Ad', value: 'etsyAds' },
 					{ name: 'Listing', value: 'listing' },
 					{ name: 'Listing Image', value: 'listingImage' },
+					{ name: 'Listing Inventory', value: 'listingInventory' },
+					{ name: 'Listing Property', value: 'listingProperty' },
+					{ name: 'Payment', value: 'payment' },
 					{ name: 'Receipt', value: 'receipt' },
+					{ name: 'Receipt Transaction', value: 'transaction' },
+					{ name: 'Return Policy', value: 'returnPolicy' },
 					{ name: 'Review', value: 'review' },
 					{ name: 'Shipping Profile', value: 'shippingProfile' },
 					{ name: 'Shop', value: 'shop' },
@@ -612,6 +618,304 @@ export class Etsy implements INodeType {
 				},
 				description: 'The numeric ID of the taxonomy node',
 			},
+
+			// ── Listing Inventory Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['listingInventory'] } },
+				options: [
+					{
+						name: 'Get',
+						value: 'get',
+						description: 'Get inventory for a listing (variations, SKUs, quantities)',
+						action: 'Get listing inventory',
+					},
+					{
+						name: 'Update',
+						value: 'update',
+						description: 'Update inventory for a listing',
+						action: 'Update listing inventory',
+					},
+				],
+				default: 'get',
+			},
+			{
+				displayName: 'Listing ID',
+				name: 'listingId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['listingInventory'] } },
+				description: 'The numeric ID of the listing',
+			},
+			{
+				displayName: 'Products (JSON)',
+				name: 'productsJson',
+				type: 'string',
+				typeOptions: { rows: 6 },
+				default: '',
+				required: true,
+				displayOptions: {
+					show: { resource: ['listingInventory'], operation: ['update'] },
+				},
+				description:
+					'JSON array of product offerings. Each product has property_values and offerings with price/quantity.',
+			},
+
+			// ── Listing Property Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['listingProperty'] } },
+				options: [
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						description: 'Get many properties for a listing',
+						action: 'Get many listing properties',
+					},
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Shop ID',
+				name: 'shopId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['listingProperty'] } },
+				description: 'The numeric ID of the Etsy shop',
+			},
+			{
+				displayName: 'Listing ID',
+				name: 'listingId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['listingProperty'] } },
+				description: 'The numeric ID of the listing',
+			},
+
+			// ── Payment Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['payment'] } },
+				options: [
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						description: 'Get many payments for a shop',
+						action: 'Get many payments',
+					},
+					{
+						name: 'Get Many by Receipt',
+						value: 'getByReceipt',
+						description: 'Get many payments for a specific receipt',
+						action: 'Get many payments by receipt',
+					},
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Shop ID',
+				name: 'shopId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['payment'] } },
+				description: 'The numeric ID of the Etsy shop',
+			},
+			{
+				displayName: 'Receipt ID',
+				name: 'receiptId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: {
+					show: { resource: ['payment'], operation: ['getByReceipt'] },
+				},
+				description: 'The numeric ID of the receipt',
+			},
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				typeOptions: {
+					minValue: 1,
+				},
+				default: 50,
+				displayOptions: { show: { resource: ['payment'], operation: ['getAll'] } },
+				description: 'Max number of results to return',
+			},
+			{
+				displayName: 'Offset',
+				name: 'offset',
+				type: 'number',
+				default: 0,
+				displayOptions: { show: { resource: ['payment'], operation: ['getAll'] } },
+				description: 'Number of results to skip',
+			},
+
+			// ── Receipt Transaction Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['transaction'] } },
+				options: [
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						description: 'Get many transactions (line items) for a receipt',
+						action: 'Get many transactions',
+					},
+					{
+						name: 'Get Many by Shop',
+						value: 'getByShop',
+						description: 'Get many transactions for a shop',
+						action: 'Get many transactions by shop',
+					},
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Shop ID',
+				name: 'shopId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['transaction'] } },
+				description: 'The numeric ID of the Etsy shop',
+			},
+			{
+				displayName: 'Receipt ID',
+				name: 'receiptId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: {
+					show: { resource: ['transaction'], operation: ['getAll'] },
+				},
+				description: 'The numeric ID of the receipt',
+			},
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				typeOptions: {
+					minValue: 1,
+				},
+				default: 50,
+				displayOptions: { show: { resource: ['transaction'], operation: ['getByShop'] } },
+				description: 'Max number of results to return',
+			},
+			{
+				displayName: 'Offset',
+				name: 'offset',
+				type: 'number',
+				default: 0,
+				displayOptions: { show: { resource: ['transaction'], operation: ['getByShop'] } },
+				description: 'Number of results to skip',
+			},
+
+			// ── Return Policy Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['returnPolicy'] } },
+				options: [
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						description: 'Get many return policies for a shop',
+						action: 'Get many return policies',
+					},
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Shop ID',
+				name: 'shopId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['returnPolicy'] } },
+				description: 'The numeric ID of the Etsy shop',
+			},
+
+			// ── Etsy Ads Operations ──
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['etsyAds'] } },
+				options: [
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						description: 'Get many promoted listing ads for a shop',
+						action: 'Get many ads',
+					},
+					{
+						name: 'Get',
+						value: 'get',
+						description: 'Get a promoted listing ad for a listing',
+						action: 'Get an ad',
+					},
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Shop ID',
+				name: 'shopId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: { show: { resource: ['etsyAds'] } },
+				description: 'The numeric ID of the Etsy shop',
+			},
+			{
+				displayName: 'Listing ID',
+				name: 'listingId',
+				type: 'number',
+				default: 0,
+				required: true,
+				displayOptions: {
+					show: { resource: ['etsyAds'], operation: ['get'] },
+				},
+				description: 'The numeric ID of the listing',
+			},
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				typeOptions: {
+					minValue: 1,
+				},
+				default: 50,
+				displayOptions: { show: { resource: ['etsyAds'], operation: ['getAll'] } },
+				description: 'Max number of results to return',
+			},
+			{
+				displayName: 'Offset',
+				name: 'offset',
+				type: 'number',
+				default: 0,
+				displayOptions: { show: { resource: ['etsyAds'], operation: ['getAll'] } },
+				description: 'Number of results to skip',
+			},
 		],
 		usableAsTool: true,
 	};
@@ -860,7 +1164,7 @@ export class Etsy implements INodeType {
 				}
 
 				// ── Taxonomy ──
-				else {
+				else if (resource === 'taxonomy') {
 					if (operation === 'getAll') {
 						responseData = await makeRequestWithRetry(
 							'GET',
@@ -872,6 +1176,115 @@ export class Etsy implements INodeType {
 						responseData = await makeRequestWithRetry(
 							'GET',
 							`/application/seller-taxonomy/nodes/${taxonomyId}/properties`,
+						);
+					}
+				}
+
+				// ── Listing Inventory ──
+				else if (resource === 'listingInventory') {
+					const listingId = this.getNodeParameter('listingId', i) as number;
+
+					if (operation === 'get') {
+						responseData = await makeRequestWithRetry(
+							'GET',
+							`/application/listings/${listingId}/inventory`,
+						);
+					} else {
+						// update
+						const productsJson = this.getNodeParameter('productsJson', i) as string;
+						const products = JSON.parse(productsJson) as IDataObject[];
+						responseData = await makeRequestWithRetry(
+							'PUT',
+							`/application/listings/${listingId}/inventory`,
+							{ products },
+						);
+					}
+				}
+
+				// ── Listing Property ──
+				else if (resource === 'listingProperty') {
+					const shopId = this.getNodeParameter('shopId', i) as number;
+					const listingId = this.getNodeParameter('listingId', i) as number;
+					responseData = await makeRequestWithRetry(
+						'GET',
+						`/application/shops/${shopId}/listings/${listingId}/properties`,
+					);
+				}
+
+				// ── Payment ──
+				else if (resource === 'payment') {
+					const shopId = this.getNodeParameter('shopId', i) as number;
+
+					if (operation === 'getAll') {
+						const limit = this.getNodeParameter('limit', i) as number;
+						const offset = this.getNodeParameter('offset', i) as number;
+						responseData = await makeRequestWithRetry(
+							'GET',
+							`/application/shops/${shopId}/payments`,
+							undefined,
+							{ limit, offset },
+						);
+					} else {
+						// getByReceipt
+						const receiptId = this.getNodeParameter('receiptId', i) as number;
+						responseData = await makeRequestWithRetry(
+							'GET',
+							`/application/shops/${shopId}/receipts/${receiptId}/payments`,
+						);
+					}
+				}
+
+				// ── Receipt Transaction ──
+				else if (resource === 'transaction') {
+					const shopId = this.getNodeParameter('shopId', i) as number;
+
+					if (operation === 'getAll') {
+						const receiptId = this.getNodeParameter('receiptId', i) as number;
+						responseData = await makeRequestWithRetry(
+							'GET',
+							`/application/shops/${shopId}/receipts/${receiptId}/transactions`,
+						);
+					} else {
+						// getByShop
+						const limit = this.getNodeParameter('limit', i) as number;
+						const offset = this.getNodeParameter('offset', i) as number;
+						responseData = await makeRequestWithRetry(
+							'GET',
+							`/application/shops/${shopId}/transactions`,
+							undefined,
+							{ limit, offset },
+						);
+					}
+				}
+
+				// ── Return Policy ──
+				else if (resource === 'returnPolicy') {
+					const shopId = this.getNodeParameter('shopId', i) as number;
+					responseData = await makeRequestWithRetry(
+						'GET',
+						`/application/shops/${shopId}/policies/return`,
+					);
+				}
+
+				// ── Etsy Ads ──
+				else {
+					const shopId = this.getNodeParameter('shopId', i) as number;
+
+					if (operation === 'getAll') {
+						const limit = this.getNodeParameter('limit', i) as number;
+						const offset = this.getNodeParameter('offset', i) as number;
+						responseData = await makeRequestWithRetry(
+							'GET',
+							`/application/shops/${shopId}/listings/active/promoted`,
+							undefined,
+							{ limit, offset },
+						);
+					} else {
+						// get
+						const listingId = this.getNodeParameter('listingId', i) as number;
+						responseData = await makeRequestWithRetry(
+							'GET',
+							`/application/shops/${shopId}/listings/${listingId}/promoted`,
 						);
 					}
 				}
